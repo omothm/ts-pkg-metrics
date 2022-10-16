@@ -1,0 +1,57 @@
+{
+  "name": "ts-template",
+  "version": "0.1.0",
+  "description": "Typescript project template",
+  "main": "dist/dev/index.js",
+  "scripts": {
+    "prebuild": "rm -rf ./dist/dev",
+    "build": "tsc --project tsconfig.dev.json",
+    "prebuild:prod": "rm -rf ./dist/prod",
+    "build:prod": "tsc --project tsconfig.prod.json",
+    "ci": "npm run lint && npm run build && npm test && npm run test:integration && npm run test:acceptance",
+    "lint": "eslint --cache .",
+    "test": "c8 --100 ava \"src/**/*.test.ts\"",
+    "test:acceptance": "ava \"test/acceptance/**/*.test.ts\"",
+    "test:integration": "ts-node --transpileOnly test/integration test/integration/**/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omothm/ts-template.git"
+  },
+  "keywords": [
+    "typescript",
+    "template",
+    "tdd"
+  ],
+  "author": "Omar Othman <omar.othman@live.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/omothm/ts-template/issues"
+  },
+  "homepage": "https://github.com/omothm/ts-template#readme",
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register/transpile-only"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.9.1",
+    "@typescript-eslint/parser": "^5.9.1",
+    "ava": "^4.3.3",
+    "c8": "^7.12.0",
+    "eslint": "^8.6.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-prettier": "^4.2.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.5.4"
+  }
+}

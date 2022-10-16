@@ -1,0 +1,17 @@
+# ide
+.vscode
+
+# linting
+.eslintcache
+
+# node
+node_modules
+
+# os
+.DS_Store
+
+# output
+dist
+
+# testing
+coverage/

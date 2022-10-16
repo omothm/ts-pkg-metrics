@@ -1,0 +1,54 @@
+name: Continuous Integration
+
+on:
+  # Run when a PR is opened/updated
+  pull_request:
+    types: [edited, opened, reopened, synchronize]
+    branches: [master]
+  # Run when pushed directly to master
+  push:
+    branches: [master]
+
+jobs:
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      - name: ESLint cache
+        uses: actions/cache@v3
+        with:
+          path: .eslintcache
+          key: ${{ runner.os }}-eslintcache
+
+      - name: NPM installation
+        run: |
+          npm ci
+
+      - name: Linting
+        run: |
+          npm run lint
+
+      - name: Building
+        run: |
+          npm run build
+
+      - name: Unit tests
+        run: |
+          npm test
+
+      - name: Integration tests
+        run: |
+          npm run test:integration
+
+      - name: Acceptance tests
+        run: |
+          npm run test:acceptance

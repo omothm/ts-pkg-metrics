@@ -1,0 +1,48 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:prettier/recommended",
+    "plugin:import/typescript"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json"
+  },
+  "plugins": ["import"],
+
+  "rules": {
+    "@typescript-eslint/explicit-module-boundary-types": "error",
+    "@typescript-eslint/member-delimiter-style": [
+      "error",
+      { "multiline": { "delimiter": "semi", "requireLast": true } }
+    ],
+    "@typescript-eslint/no-shadow": ["error"],
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/semi": ["error", "always"],
+    "array-callback-return": ["error", { "checkForEach": true }],
+    "arrow-parens": ["error"],
+    "block-scoped-var": ["error"],
+    "comma-dangle": ["error", "always-multiline"],
+    "consistent-return": ["error"],
+    "curly": ["error"],
+    "dot-notation": ["error"],
+    "eol-last": ["warn"],
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "import/no-useless-path-segments": ["error"],
+    "import/order": ["error"],
+    "linebreak-style": ["error", "unix"],
+    "lines-between-class-members": ["error", "always", { "exceptAfterSingleLine": true }],
+    "no-control-regex": ["off"],
+    "no-lonely-if": ["error"],
+    "no-param-reassign": ["error", { "props": true }],
+    "no-trailing-spaces": ["error"],
+    "object-shorthand": ["error", "always"],
+    "prefer-destructuring": ["error", { "object": true, "array": false }],
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "semi": ["off"],
+    "sort-imports": ["error", { "ignoreDeclarationSort": true }],
+    "yoda": ["error"]
+  }
+}
