@@ -1,13 +1,14 @@
 {
-  "name": "ts-template",
+  "name": "ts-pkg-metrics",
   "version": "0.1.0",
-  "description": "Typescript project template",
-  "main": "dist/dev/index.js",
+  "description": "Measure the health of your app architecture",
+  "bin": "lib/cli.js",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "prebuild": "rm -rf ./dist/dev",
-    "build": "tsc --project tsconfig.dev.json",
-    "prebuild:prod": "rm -rf ./dist/prod",
-    "build:prod": "tsc --project tsconfig.prod.json",
+    "prebuild": "rm -rf ./lib",
+    "build": "tsc --project tsconfig.build.json",
     "ci": "npm run lint && npm run build && npm test && npm run test:integration && npm run test:acceptance",
     "lint": "eslint --cache .",
     "test": "c8 --100 ava \"src/**/*.test.ts\"",
@@ -16,19 +17,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/omothm/ts-template.git"
+    "url": "git+https://github.com/omothm/ts-pkg-metrics.git"
   },
   "keywords": [
-    "typescript",
-    "template",
-    "tdd"
+    "architecture",
+    "clean",
+    "typescript"
   ],
   "author": "Omar Othman <omar.othman@live.com>",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/omothm/ts-template/issues"
+    "url": "https://github.com/omothm/ts-pkg-metrics/issues"
   },
-  "homepage": "https://github.com/omothm/ts-template#readme",
+  "homepage": "https://github.com/omothm/ts-pkg-metrics#readme",
   "prettier": {
     "printWidth": 100,
     "singleQuote": true,

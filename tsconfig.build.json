@@ -3,6 +3,6 @@
   "exclude": ["test/", "src/**/*.test.ts"],
   "compilerOptions": {
     "rootDir": "src/",
-    "outDir": "dist/dev/"
+    "outDir": "lib/"
   }
 }
