@@ -7,7 +7,8 @@ test.beforeEach(() => {
   api = new Api();
 });
 
-test('example test', (t) => {
-  api.exampleApi();
+test.skip('facade acceptance test', async (t) => {
+  await api.analyze('example1');
+  api.validate('core', 'numClasses', 5);
   t.pass();
 });
