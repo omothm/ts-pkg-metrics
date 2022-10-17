@@ -33,6 +33,11 @@ jobs:
         run: |
           npm ci
 
+      # Config file created here to pass linting in the next step
+      - name: Create config file for integration tests
+        run: |
+          cp test/integration/config-example.ts test/integration/config.ts
+
       - name: Linting
         run: |
           npm run lint
