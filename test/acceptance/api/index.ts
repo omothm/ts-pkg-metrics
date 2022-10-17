@@ -1,4 +1,7 @@
 import path from 'path';
+import DefaultProjectAnalyzer from '../../../src/impl/analyzer';
+import MetricsFacade from '../../../src/impl/facade';
+import DefaultProjectLoader from '../../../src/impl/loader';
 
 export default class Api {
   private static projectsDirectory = path.join(__dirname, '..', 'data');
@@ -8,7 +11,7 @@ export default class Api {
   async analyze(projectName: string): Promise<void> {
     const projectDirectory = path.resolve(Api.projectsDirectory, projectName);
     const facade = new FacadeProxy(projectDirectory);
-    this.results = await facade.loadAndAnalyze();
+    this.results = await facade.analyze();
   }
 
   validate(packageName: string, metric: keyof Metrics, value: number): void {
@@ -24,11 +27,20 @@ export default class Api {
 }
 
 class FacadeProxy {
-  // eslint-disable-next-line
-  constructor(projectDirectory: string) {}
+  private facade: MetricsFacade | undefined;
 
-  loadAndAnalyze(): Promise<Result[]> {
-    throw new Error('Method not implemented.');
+  constructor(projectDirectory: string) {
+    const loader = new DefaultProjectLoader(projectDirectory);
+    const analyzer = new DefaultProjectAnalyzer();
+    this.facade = new MetricsFacade(loader, analyzer);
+  }
+
+  async analyze(): Promise<Result[]> {
+    if (!this.facade) {
+      throw new Error('Facade not constructed');
+    }
+    const results = await this.facade.analyze();
+    return results;
   }
 }
 
