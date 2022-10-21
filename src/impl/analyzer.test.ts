@@ -10,7 +10,8 @@ test('should throw if no packages', (t) => {
 test('numClasses: should report 0 classes for empty package', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([{ packageName: 'package1', modules: [] }]);
-  t.deepEqual(report, [{ packageName: 'package1', numClasses: 0 }]);
+  t.is(report.length, 1);
+  t.like(report[0], { packageName: 'package1', numClasses: 0 });
 });
 
 test('numClasses: should report correct number of exported classes (members)', (t) => {
@@ -31,7 +32,8 @@ test('numClasses: should report correct number of exported classes (members)', (
       ],
     },
   ]);
-  t.deepEqual(report, [{ packageName: 'package1', numClasses: 5 }]);
+  t.is(report.length, 1);
+  t.like(report[0], { packageName: 'package1', numClasses: 5 });
 });
 
 class AnalyzerProxy {
@@ -50,4 +52,5 @@ interface PackageModules {
 interface PackageReport {
   packageName: string;
   numClasses: number;
+  abstractness: number;
 }
