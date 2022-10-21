@@ -13,15 +13,25 @@ test('numClasses: should report 0 classes for empty package', (t) => {
   t.deepEqual(report, [{ packageName: 'package1', numClasses: 0 }]);
 });
 
-test('numClasses: should report correct number of exported classes', (t) => {
+test('numClasses: should report correct number of exported classes (members)', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     {
       packageName: 'package1',
-      modules: ['export default class Class1 {}\nfunction a() { class X {} }'],
+      modules: [
+        `export default class Class1 {}
+         function a() { class X {} }`,
+        `export class Class2 {}
+         export function helperFunction() {}`,
+        `const obj = 123;
+         export default obj;`,
+        `export default {
+           hello: 'world',
+         };`,
+      ],
     },
   ]);
-  t.deepEqual(report, [{ packageName: 'package1', numClasses: 1 }]);
+  t.deepEqual(report, [{ packageName: 'package1', numClasses: 5 }]);
 });
 
 class AnalyzerProxy {
