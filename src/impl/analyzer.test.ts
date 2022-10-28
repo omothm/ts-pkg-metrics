@@ -36,6 +36,74 @@ test('numClasses: should report correct number of exported classes (members)', (
   t.like(report[0], { packageName: 'package1', numClasses: 5 });
 });
 
+test('abstractness: should report NaN abstractness for empty package', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([{ packageName: 'package1', modules: [] }]);
+  t.is(report.length, 1);
+  t.is(report[0].packageName, 'package1');
+  t.is(report[0].abstractness, NaN);
+});
+
+test('abstractness: should report 0 abstractness for all-concrete exports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    {
+      packageName: 'package1',
+      modules: [
+        `export default class X {}
+         export function x() {}`,
+        `export class Y {}
+         const m = 3;
+         export default m;`,
+        `export default {
+           environment: 'production',
+         }`,
+      ],
+    },
+  ]);
+  t.is(report.length, 1);
+  t.is(report[0].packageName, 'package1');
+  t.is(report[0].abstractness, 0);
+});
+
+test('abstractness: should report 1 abstractness for all-abstract exports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    {
+      packageName: 'package1',
+      modules: [
+        'export default interface I {}',
+        'export abstract class S {}',
+        `type M = string;
+         export default M;`,
+      ],
+    },
+  ]);
+  t.is(report.length, 1);
+  t.is(report[0].packageName, 'package1');
+  t.is(report[0].abstractness, 1);
+});
+
+test('abstractness: should report ratio of abstract exports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    {
+      packageName: 'package1',
+      modules: [
+        `const m = 3;
+         export default m;`,
+        'export default interface I {}',
+        'export abstract class S {}',
+        `type M = string;
+         export default M;`,
+      ],
+    },
+  ]);
+  t.is(report.length, 1);
+  t.is(report[0].packageName, 'package1');
+  t.is(report[0].abstractness, 0.75);
+});
+
 class AnalyzerProxy {
   private analyzer = new DefaultProjectAnalyzer();
 
