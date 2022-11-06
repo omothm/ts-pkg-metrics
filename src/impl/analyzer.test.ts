@@ -104,6 +104,10 @@ test('abstractness: should report ratio of abstract exports', (t) => {
   t.is(report[0].abstractness, 0.75);
 });
 
+test.todo('internalRelationships: should report 0 for zero-cohesion package');
+
+test.todo('internalRelationships: should report number of package-internal references');
+
 class AnalyzerProxy {
   private analyzer = new DefaultProjectAnalyzer();
 

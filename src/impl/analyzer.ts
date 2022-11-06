@@ -18,6 +18,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
         packageName: p.packageName,
         numClasses: totalClasses,
         abstractness: totalAbstract / totalClasses,
+        internalRelationships: 1,
       };
     });
   }
