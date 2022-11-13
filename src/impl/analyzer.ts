@@ -14,11 +14,14 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       const totalAbstract = this.addUp(classes, 'abstract');
       const totalConcrete = this.addUp(classes, 'concrete');
       const totalClasses = totalAbstract + totalConcrete;
+      const internalRelationships = p.modules
+        .map((m) => this.countInternalImports(m))
+        .reduce((acc, cur) => acc + cur, 0);
       return {
         packageName: p.packageName,
         numClasses: totalClasses,
         abstractness: totalAbstract / totalClasses,
-        internalRelationships: 1,
+        internalRelationships,
       };
     });
   }
@@ -38,6 +41,77 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       0,
     );
     return { abstract, concrete: exports.length - abstract };
+  }
+
+  private countInternalImports(module: string) {
+    const sourceFile = ts.createSourceFile('', module, ts.ScriptTarget.Latest);
+    const nodes = sourceFile.getChildAt(0).getChildren();
+    const localImportDeclarations = nodes.filter((node) => {
+      if (node.kind !== ts.SyntaxKind.ImportDeclaration) {
+        return false;
+      }
+      const moduleStringNode = this.nodeDeepFind(
+        node,
+        sourceFile,
+        (nn) => nn.kind === ts.SyntaxKind.StringLiteral,
+      );
+      /* c8 ignore next 3 */
+      if (!moduleStringNode) {
+        throw new Error('Unreachable');
+      }
+      const moduleString = moduleStringNode.getText(sourceFile);
+      return /^(?:'|")\.(?:'|"|\/)/.test(moduleString);
+    });
+    const localImportedSymbolCount = localImportDeclarations.reduce((accTotalSymbolCount, node) => {
+      const importClause = this.nodeDeepFind(
+        node,
+        sourceFile,
+        (n) => n.kind === ts.SyntaxKind.ImportClause,
+      );
+
+      /* c8 ignore next 3 */
+      if (!importClause) {
+        throw new Error('Unreachable');
+      }
+
+      const importClauseFirstChild = importClause.getChildAt(0);
+
+      /* c8 ignore next 3 */
+      if (!importClauseFirstChild) {
+        throw new Error('Unreachable');
+      }
+
+      let statementSymbolCount: number;
+
+      if (importClauseFirstChild.kind === ts.SyntaxKind.Identifier) {
+        // default import
+        statementSymbolCount = 1;
+      } else {
+        // nmaed imports
+        const importSpecifiersParentNode = this.nodeDeepFind(
+          importClauseFirstChild,
+          sourceFile,
+          (n) => n.kind === ts.SyntaxKind.SyntaxList,
+        );
+
+        /* c8 ignore next 3 */
+        if (!importSpecifiersParentNode) {
+          throw new Error('Unreachable');
+        }
+
+        statementSymbolCount = importSpecifiersParentNode
+          .getChildren()
+          .reduce(
+            (accStatementSymbolCount, cur) =>
+              accStatementSymbolCount + (cur.kind === ts.SyntaxKind.ImportSpecifier ? 1 : 0),
+            0,
+          );
+      }
+
+      return accTotalSymbolCount + statementSymbolCount;
+    }, 0);
+
+    return localImportedSymbolCount;
   }
 
   /** Adds up the values of a given key for all members of an array. */

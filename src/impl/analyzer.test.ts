@@ -104,9 +104,59 @@ test('abstractness: should report ratio of abstract exports', (t) => {
   t.is(report[0].abstractness, 0.75);
 });
 
-test.todo('internalRelationships: should report 0 for zero-cohesion package');
+test('internalRelationships: should report 0 package with no same-package imports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    {
+      packageName: 'package1',
+      modules: [
+        `export default class X {}
+         export function x() {}`,
+        `export class Y {}
+         const m = 3;
+         export default m;`,
+        `export default {
+           environment: 'production',
+         }`,
+      ],
+    },
+  ]);
+  t.is(report.length, 1);
+  t.is(report[0].packageName, 'package1');
+  t.is(report[0].internalRelationships, 0);
+});
 
-test.todo('internalRelationships: should report number of package-internal references');
+test('internalRelationships: should report number of package-internal imports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    {
+      packageName: 'package1',
+      modules: [
+        `import m from './module2';
+         import { Y, Z } from './module3';
+         export default class X {
+           constructor(public y = new Y()) {}
+           method(): number {
+              return x(m);
+           }
+         }
+         export function x(m: number): number {
+           return m * 2;
+         }
+         export class Z extends X {}`,
+        `export class Y {}
+         const m = 3;
+         export default m;`,
+        `export default {
+           environment: 'production',
+         }`,
+      ],
+    },
+  ]);
+  t.is(report.length, 1);
+  t.is(report[0].packageName, 'package1');
+  t.is(report[0].internalRelationships, 3);
+});
 
 class AnalyzerProxy {
   private analyzer = new DefaultProjectAnalyzer();
@@ -125,4 +175,5 @@ interface PackageReport {
   packageName: string;
   numClasses: number;
   abstractness: number;
+  internalRelationships: number;
 }
