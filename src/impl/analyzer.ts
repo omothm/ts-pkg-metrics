@@ -5,47 +5,47 @@ import PackageReport from '../core/report';
 import { NoPackagesError } from '../errors';
 
 export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
-  analyze(packages: PackageModules[]): PackageReport[] {
+  analyze(packages: readonly PackageModules[]): PackageReport[] {
     if (!packages.length) {
       throw new NoPackagesError();
     }
     return packages.map((p) => {
-      const classes = p.modules.map((m) => this.countClasses(m));
-      const totalAbstract = this.addUp(classes, 'abstract');
-      const totalConcrete = this.addUp(classes, 'concrete');
-      const totalClasses = totalAbstract + totalConcrete;
-      const internalRelationships = p.modules
-        .map((m) => this.countInternalImports(m))
-        .reduce((acc, cur) => acc + cur, 0);
+      const analyses = p.modules.map((m) => this.analyzeModule(m));
+
+      const numAbstract = this.addUp(analyses, 'numAbstract');
+      const numClasses = this.addUp(analyses, 'numClasses');
+      const internalRelationships = this.addUp(analyses, 'internalRelationships');
+
       return {
         packageName: p.packageName,
-        numClasses: totalClasses,
-        abstractness: totalAbstract / totalClasses,
+        numClasses,
+        abstractness: numAbstract / numClasses,
         internalRelationships,
       };
     });
   }
 
-  /**
-   * Counts abstract/concrete classes in a module. A _class_ in this context is any exported member.
-   */
-  private countClasses(module: string) {
+  private analyzeModule(module: string) {
     const sourceFile = ts.createSourceFile('', module, ts.ScriptTarget.Latest);
-    const syntaxList = sourceFile.getChildAt(0);
-    const children = syntaxList.getChildren();
-    const exports = children.filter((c) =>
-      this.nodeDeeplySatisfies(c, sourceFile, (n) => n.kind === ts.SyntaxKind.ExportKeyword),
+    const nodes = sourceFile.getChildAt(0).getChildren();
+    return {
+      ...this.countExportedMembers(nodes, sourceFile),
+      internalRelationships: this.countInternalImports(nodes, sourceFile),
+    };
+  }
+
+  private countExportedMembers(nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
+    const exports = nodes.filter((node) =>
+      this.nodeDeeplySatisfies(node, sourceFile, (n) => n.kind === ts.SyntaxKind.ExportKeyword),
     );
-    const abstract = exports.reduce(
+    const numAbstract = exports.reduce(
       (acc, cur) => acc + (this.nodeIsAbstract(cur, sourceFile) ? 1 : 0),
       0,
     );
-    return { abstract, concrete: exports.length - abstract };
+    return { numClasses: exports.length, numAbstract };
   }
 
-  private countInternalImports(module: string) {
-    const sourceFile = ts.createSourceFile('', module, ts.ScriptTarget.Latest);
-    const nodes = sourceFile.getChildAt(0).getChildren();
+  private countInternalImports(nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
     const localImportDeclarations = nodes.filter((node) => {
       if (node.kind !== ts.SyntaxKind.ImportDeclaration) {
         return false;
@@ -55,13 +55,16 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
         sourceFile,
         (nn) => nn.kind === ts.SyntaxKind.StringLiteral,
       );
+
       /* c8 ignore next 3 */
       if (!moduleStringNode) {
         throw new Error('Unreachable');
       }
+
       const moduleString = moduleStringNode.getText(sourceFile);
       return /^(?:'|")\.(?:'|"|\/)/.test(moduleString);
     });
+
     const localImportedSymbolCount = localImportDeclarations.reduce((accTotalSymbolCount, node) => {
       const importClause = this.nodeDeepFind(
         node,
@@ -115,7 +118,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
   }
 
   /** Adds up the values of a given key for all members of an array. */
-  private addUp<T extends Record<string, number>>(obj: T[], key: keyof T) {
+  private addUp<T extends Record<string, number>>(obj: readonly T[], key: keyof T) {
     return obj.reduce((acc, cur) => acc + cur[key], 0);
   }
 
