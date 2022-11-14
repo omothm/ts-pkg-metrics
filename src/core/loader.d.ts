@@ -4,5 +4,6 @@ export interface ProjectLoader {
 
 interface PackageModules {
   packageName: string;
+  packagePath: string;
   modules: string[];
 }

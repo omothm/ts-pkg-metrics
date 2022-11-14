@@ -22,7 +22,7 @@ export default class DefaultProjectLoader implements ProjectLoader {
     return Promise.all(
       packages.map(async (p) => {
         const modules = await this.loadModules(p.name);
-        return { packageName: p.name, modules };
+        return { packageName: p.name, packagePath: '', modules };
       }),
     );
   }
