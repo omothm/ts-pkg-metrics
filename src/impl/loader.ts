@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { PackageModules, ProjectLoader } from '../core/loader';
 import { DirectoryNotFoundError, EmptyProjectError, NoPackagesError } from '../errors';
 
@@ -22,7 +23,7 @@ export default class DefaultProjectLoader implements ProjectLoader {
     return Promise.all(
       packages.map(async (p) => {
         const modules = await this.loadModules(p.name);
-        return { packageName: p.name, packagePath: '', modules };
+        return { packageName: p.name, modules };
       }),
     );
   }
@@ -31,8 +32,11 @@ export default class DefaultProjectLoader implements ProjectLoader {
     const files = await this.getDeepFiles(packageName);
     return Promise.all(
       files.map(async (f) => {
-        const buffer = await fs.readFile(`${this.projectDirectory}/${f}`);
-        return buffer.toString();
+        const content = (await fs.readFile(`${this.projectDirectory}/${f}`)).toString();
+        return {
+          path: path.dirname(f),
+          content,
+        };
       }),
     );
   }

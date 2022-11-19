@@ -42,15 +42,21 @@ test.serial('should detect folders as packages but not files', async (t) => {
   const packages = await loader.load();
   t.is(packages.length, 2);
   t.is(packages.find((p) => p.packageName === 'package1')?.modules.length, 1);
-  t.true(
-    packages.find((p) => p.packageName === 'package1')?.modules.includes("console.log('module1');"),
+  t.truthy(
+    packages
+      .find((p) => p.packageName === 'package1')
+      ?.modules.find((m) => m.content === "console.log('module1');"),
   );
   t.is(packages.find((p) => p.packageName === 'package2')?.modules.length, 2);
-  t.true(
-    packages.find((p) => p.packageName === 'package2')?.modules.includes("console.log('module2');"),
+  t.truthy(
+    packages
+      .find((p) => p.packageName === 'package2')
+      ?.modules.find((m) => m.content === "console.log('module2');"),
   );
-  t.true(
-    packages.find((p) => p.packageName === 'package2')?.modules.includes("console.log('module3');"),
+  t.truthy(
+    packages
+      .find((p) => p.packageName === 'package2')
+      ?.modules.find((m) => m.content === "console.log('module3');"),
   );
 });
 
@@ -64,5 +70,5 @@ class LoaderProxy {
 
 interface PackageModules {
   packageName: string;
-  modules: string[];
+  modules: { path: string; content: string }[];
 }

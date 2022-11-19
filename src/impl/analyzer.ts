@@ -1,6 +1,7 @@
+import path from 'node:path';
 import ts from 'typescript';
 import ProjectAnalyzer from '../core/analyzer';
-import { PackageModules } from '../core/loader';
+import { Module, PackageModules } from '../core/loader';
 import PackageReport from '../core/report';
 import { NoPackagesError } from '../errors';
 
@@ -9,32 +10,55 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     if (!packages.length) {
       throw new NoPackagesError();
     }
-    return packages.map((p) => {
+
+    const reports = packages.map<PackageReport>((p) => ({
+      packageName: p.packageName,
+      numClasses: 0,
+      abstractness: 0,
+      internalRelationships: 0,
+      afferentCouplings: 0,
+      efferentCouplings: 0,
+    }));
+
+    const externalImports: string[] = [];
+
+    packages.forEach((p, i) => {
       const analyses = p.modules.map((m) => this.analyzeModule(m));
 
       const numAbstract = this.addUp(analyses, 'numAbstract');
       const numClasses = this.addUp(analyses, 'numClasses');
       const internalRelationships = this.addUp(analyses, 'internalRelationships');
 
-      return {
-        packageName: p.packageName,
-        numClasses,
-        abstractness: numAbstract / numClasses,
-        internalRelationships,
-      };
+      const packageExternalImports = analyses.flatMap((a) => a.externalImports);
+      externalImports.push(...packageExternalImports);
+
+      const report = reports[i];
+      report.numClasses = numClasses;
+      report.abstractness = numAbstract / numClasses;
+      report.internalRelationships = internalRelationships;
+      report.efferentCouplings = packageExternalImports.length;
     });
+
+    externalImports.forEach((imp) => {
+      const report = reports.find((_, i) => imp.startsWith(packages[i].packageName));
+      if (report) {
+        report.afferentCouplings++;
+      }
+    });
+
+    return reports;
   }
 
-  private analyzeModule(module: string) {
-    const sourceFile = ts.createSourceFile('', module, ts.ScriptTarget.Latest);
+  private analyzeModule(module: Module) {
+    const sourceFile = ts.createSourceFile('', module.content, ts.ScriptTarget.Latest);
     const nodes = sourceFile.getChildAt(0).getChildren();
     return {
-      ...this.countExportedMembers(nodes, sourceFile),
-      internalRelationships: this.countInternalImports(nodes, sourceFile),
+      ...this.analyzeExports(nodes, sourceFile),
+      ...this.analyzeImports(module.path, nodes, sourceFile),
     };
   }
 
-  private countExportedMembers(nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
+  private analyzeExports(nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
     const exports = nodes.filter((node) =>
       this.nodeDeeplySatisfies(node, sourceFile, (n) => n.kind === ts.SyntaxKind.ExportKeyword),
     );
@@ -45,15 +69,51 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     return { numClasses: exports.length, numAbstract };
   }
 
-  private countInternalImports(nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
-    const localImportDeclarations = nodes.filter((node) => {
+  private analyzeImports(modulePath: string, nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
+    const importDeclarations = this.getImportDeclarations(modulePath, nodes, sourceFile);
+    const internalImportSymbolCount = importDeclarations.internal.reduce(
+      (accTotalSymbolCount, { node }) => {
+        const importedSymbols = this.getImportedSymbols(node, sourceFile);
+        return accTotalSymbolCount + importedSymbols.length;
+      },
+      0,
+    );
+
+    const externalImportNames = importDeclarations.external.flatMap(({ node, module }) => {
+      const symbols = this.getImportedSymbols(node, sourceFile);
+      return Array<string>(symbols.length).fill(module);
+    });
+
+    return {
+      internalRelationships: internalImportSymbolCount,
+      externalImports: externalImportNames,
+    };
+  }
+
+  private getImportDeclarations(
+    modulePath: string,
+    nodes: readonly ts.Node[],
+    sourceFile: ts.SourceFile,
+  ) {
+    interface ImportDeclaration {
+      module: string;
+      node: ts.Node;
+    }
+
+    const declarations = {
+      internal: [] as ImportDeclaration[],
+      external: [] as ImportDeclaration[],
+    };
+
+    nodes.forEach((node) => {
       if (node.kind !== ts.SyntaxKind.ImportDeclaration) {
-        return false;
+        return;
       }
+
       const moduleStringNode = this.nodeDeepFind(
         node,
         sourceFile,
-        (nn) => nn.kind === ts.SyntaxKind.StringLiteral,
+        (n) => n.kind === ts.SyntaxKind.StringLiteral,
       );
 
       /* c8 ignore next 3 */
@@ -61,64 +121,67 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
         throw new Error('Unreachable');
       }
 
-      const moduleString = moduleStringNode.getText(sourceFile);
-      return /^(?:'|")\.(?:'|"|\/)/.test(moduleString);
+      const moduleString = moduleStringNode.getText(sourceFile).slice(1, -1); // drop quotes
+      const module = this.getRelativePath(modulePath, moduleString);
+
+      if (module.startsWith(modulePath)) {
+        declarations.internal.push({ node, module });
+      } else {
+        declarations.external.push({ node, module });
+      }
     });
 
-    const localImportedSymbolCount = localImportDeclarations.reduce((accTotalSymbolCount, node) => {
-      const importClause = this.nodeDeepFind(
-        node,
-        sourceFile,
-        (n) => n.kind === ts.SyntaxKind.ImportClause,
-      );
+    return declarations;
+  }
 
-      /* c8 ignore next 3 */
-      if (!importClause) {
-        throw new Error('Unreachable');
-      }
+  private getImportedSymbols(node: ts.Node, sourceFile: ts.SourceFile) {
+    const importClause = this.nodeDeepFind(
+      node,
+      sourceFile,
+      (n) => n.kind === ts.SyntaxKind.ImportClause,
+    );
 
-      const importClauseFirstChild = importClause.getChildAt(0);
+    /* c8 ignore next 3 */
+    if (!importClause) {
+      throw new Error('Unreachable');
+    }
 
-      /* c8 ignore next 3 */
-      if (!importClauseFirstChild) {
-        throw new Error('Unreachable');
-      }
+    const importClauseFirstChild = importClause.getChildAt(0);
 
-      let statementSymbolCount: number;
+    /* c8 ignore next 3 */
+    if (!importClauseFirstChild) {
+      throw new Error('Unreachable');
+    }
 
-      if (importClauseFirstChild.kind === ts.SyntaxKind.Identifier) {
-        // default import
-        statementSymbolCount = 1;
-      } else {
-        // nmaed imports
-        const importSpecifiersParentNode = this.nodeDeepFind(
-          importClauseFirstChild,
-          sourceFile,
-          (n) => n.kind === ts.SyntaxKind.SyntaxList,
-        );
+    // default import
+    if (importClauseFirstChild.kind === ts.SyntaxKind.Identifier) {
+      return [importClauseFirstChild.getText(sourceFile)];
+    }
 
-        /* c8 ignore next 3 */
-        if (!importSpecifiersParentNode) {
-          throw new Error('Unreachable');
-        }
+    // named imports
+    const importSpecifiersParentNode = this.nodeDeepFind(
+      importClauseFirstChild,
+      sourceFile,
+      (n) => n.kind === ts.SyntaxKind.SyntaxList,
+    );
 
-        statementSymbolCount = importSpecifiersParentNode
-          .getChildren()
-          .reduce(
-            (accStatementSymbolCount, cur) =>
-              accStatementSymbolCount + (cur.kind === ts.SyntaxKind.ImportSpecifier ? 1 : 0),
-            0,
-          );
-      }
+    /* c8 ignore next 3 */
+    if (!importSpecifiersParentNode) {
+      throw new Error('Unreachable');
+    }
 
-      return accTotalSymbolCount + statementSymbolCount;
-    }, 0);
+    return importSpecifiersParentNode
+      .getChildren()
+      .filter((n) => n.kind === ts.SyntaxKind.ImportSpecifier)
+      .map((n) => n.getText(sourceFile));
+  }
 
-    return localImportedSymbolCount;
+  private getRelativePath(modulePath: string, module: string) {
+    return path.join(modulePath, module);
   }
 
   /** Adds up the values of a given key for all members of an array. */
-  private addUp<T extends Record<string, number>>(obj: readonly T[], key: keyof T) {
+  private addUp<K extends string, T extends { [key in K]: number }>(obj: readonly T[], key: K) {
     return obj.reduce((acc, cur) => acc + cur[key], 0);
   }
 

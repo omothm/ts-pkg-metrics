@@ -9,16 +9,16 @@ test('should throw if no packages', (t) => {
 
 test('numClasses: should report 0 classes for empty package', (t) => {
   const analyzer = new AnalyzerProxy();
-  const report = analyzer.analyze([createPackage({ packageName: 'package1', modules: [] })]);
+  const report = analyzer.analyze([createPackage({ packageName: '/package1', modules: [] })]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: 'package1', numClasses: 0 });
+  t.like(report[0], { packageName: '/package1', numClasses: 0 });
 });
 
 test('numClasses: should report correct number of exported classes (members)', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: 'package1',
+      packageName: '/package1',
       modules: [
         `export default class Class1 {}
          function a() { class X {} }`,
@@ -33,22 +33,21 @@ test('numClasses: should report correct number of exported classes (members)', (
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: 'package1', numClasses: 5 });
+  t.like(report[0], { packageName: '/package1', numClasses: 5 });
 });
 
 test('abstractness: should report NaN abstractness for empty package', (t) => {
   const analyzer = new AnalyzerProxy();
-  const report = analyzer.analyze([createPackage({ packageName: 'package1', modules: [] })]);
+  const report = analyzer.analyze([createPackage({ packageName: '/package1', modules: [] })]);
   t.is(report.length, 1);
-  t.is(report[0].packageName, 'package1');
-  t.is(report[0].abstractness, NaN);
+  t.like(report[0], { packageName: '/package1', abstractness: NaN });
 });
 
 test('abstractness: should report 0 abstractness for all-concrete exports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: 'package1',
+      packageName: '/package1',
       modules: [
         `export default class X {}
          export function x() {}`,
@@ -62,15 +61,14 @@ test('abstractness: should report 0 abstractness for all-concrete exports', (t) 
     }),
   ]);
   t.is(report.length, 1);
-  t.is(report[0].packageName, 'package1');
-  t.is(report[0].abstractness, 0);
+  t.like(report[0], { packageName: '/package1', abstractness: 0 });
 });
 
 test('abstractness: should report 1 abstractness for all-abstract exports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: 'package1',
+      packageName: '/package1',
       modules: [
         'export default interface I {}',
         'export abstract class S {}',
@@ -80,15 +78,14 @@ test('abstractness: should report 1 abstractness for all-abstract exports', (t) 
     }),
   ]);
   t.is(report.length, 1);
-  t.is(report[0].packageName, 'package1');
-  t.is(report[0].abstractness, 1);
+  t.like(report[0], { packageName: '/package1', abstractness: 1 });
 });
 
 test('abstractness: should report ratio of abstract exports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: 'package1',
+      packageName: '/package1',
       modules: [
         `const m = 3;
          export default m;`,
@@ -100,15 +97,14 @@ test('abstractness: should report ratio of abstract exports', (t) => {
     }),
   ]);
   t.is(report.length, 1);
-  t.is(report[0].packageName, 'package1');
-  t.is(report[0].abstractness, 0.75);
+  t.like(report[0], { packageName: '/package1', abstractness: 0.75 });
 });
 
 test('internalRelationships: should report 0 package with no same-package imports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: 'package1',
+      packageName: '/package1',
       modules: [
         `export default class X {}
          export function x() {}`,
@@ -122,15 +118,14 @@ test('internalRelationships: should report 0 package with no same-package import
     }),
   ]);
   t.is(report.length, 1);
-  t.is(report[0].packageName, 'package1');
-  t.is(report[0].internalRelationships, 0);
+  t.like(report[0], { packageName: '/package1', internalRelationships: 0 });
 });
 
 test('internalRelationships: should report number of package-internal imports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: 'package1',
+      packageName: '/package1',
       modules: [
         `import m from './module2';
          import { Y, Z } from './module3';
@@ -142,11 +137,11 @@ test('internalRelationships: should report number of package-internal imports', 
          }
          export function x(m: number): number {
            return m * 2;
-         }
-         export class Z extends X {}`,
-        `export class Y {}
-         const m = 3;
+         }`,
+        `const m = 3;
          export default m;`,
+        `export class Y {}
+         export class Z {}`,
         `export default {
            environment: 'production',
          }`,
@@ -154,13 +149,113 @@ test('internalRelationships: should report number of package-internal imports', 
     }),
   ]);
   t.is(report.length, 1);
-  t.is(report[0].packageName, 'package1');
-  t.is(report[0].internalRelationships, 3);
+  t.like(report[0], { packageName: '/package1', internalRelationships: 3 });
 });
 
-test.todo('couplings: should report 0 couplings for non-coupled packages');
+test('couplings: should report 0 couplings for non-coupled packages', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    createPackage({
+      packageName: '/package1',
+      modules: [
+        `import m from './module2';
+         import { Y, Z } from './module3';
+         export default class X {
+           constructor(public y = new Y()) {}
+           method(): number {
+              return x(m);
+           }
+         }
+         export function x(m: number): number {
+           return m * 2;
+         }`,
+        `const m = 3;
+         export default m;`,
+        `export class Y {}
+         export class Z {}`,
+      ],
+    }),
+    createPackage({
+      packageName: '/package2',
+      modules: [
+        `export interface Greeter {}
+        `,
+      ],
+    }),
+  ]);
+  t.is(report.length, 2);
+  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 0 });
+  t.like(report[1], { packageName: '/package2', afferentCouplings: 0, efferentCouplings: 0 });
+});
 
-test.todo('couplings: should report number of couplings between packages');
+test('couplings: should report number of couplings between packages', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    createPackage({
+      packageName: '/package1',
+      modules: [
+        {
+          path: '/package1',
+          content: `
+            import m from './module2';
+            import { Y, Z } from './module3';
+            import { Greeter } from '../package2';
+            export default class X implements Greeter {
+              constructor(public y = new Y()) {}
+              method(): number {
+                return x(m);
+              }
+            }
+            export function x(m: number): number {
+              return m * 2;
+            }
+          `,
+        },
+        {
+          path: '/package1',
+          content: `
+            const m = 3;
+            export default m;
+          `,
+        },
+        {
+          path: '/package1',
+          content: `
+            export class Y {}
+            export class Z {}
+          `,
+        },
+      ],
+    }),
+    createPackage({
+      packageName: '/package2',
+      modules: [
+        {
+          path: '/package2',
+          content: `
+            export interface Greeter {}
+          `,
+        },
+      ],
+    }),
+    createPackage({
+      packageName: '/package3',
+      modules: [
+        {
+          path: '/package3',
+          content: `
+            import { Greeter } from '../package2';
+            export default class AnotherGreeter implements Greeter {}
+          `,
+        },
+      ],
+    }),
+  ]);
+  t.is(report.length, 3);
+  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 1 });
+  t.like(report[1], { packageName: '/package2', afferentCouplings: 2, efferentCouplings: 0 });
+  t.like(report[2], { packageName: '/package3', afferentCouplings: 0, efferentCouplings: 1 });
+});
 
 class AnalyzerProxy {
   private analyzer = new DefaultProjectAnalyzer();
@@ -170,10 +265,15 @@ class AnalyzerProxy {
   }
 }
 
-function createPackage(params: { packageName: string; packagePath?: string; modules: string[] }) {
+function createPackage(params: {
+  packageName: string;
+  modules: (string | { path: string; content: string })[];
+}) {
   return {
-    ...params,
-    packagePath: params.packagePath ?? `./${params.packageName}`,
+    packageName: params.packageName,
+    modules: params.modules.map((m, i) =>
+      typeof m === 'string' ? { path: `module${i}`, content: m } : m,
+    ),
   };
 }
 
@@ -182,4 +282,6 @@ interface PackageReport {
   numClasses: number;
   abstractness: number;
   internalRelationships: number;
+  afferentCouplings: number;
+  efferentCouplings: number;
 }

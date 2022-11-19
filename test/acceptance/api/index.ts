@@ -52,4 +52,6 @@ interface Metrics {
   numClasses: number;
   abstractness: number;
   internalRelationships: number;
+  afferentCouplings: number;
+  efferentCouplings: number;
 }

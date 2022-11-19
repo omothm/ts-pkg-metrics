@@ -3,4 +3,6 @@ export default interface PackageReport {
   numClasses: number;
   abstractness: number;
   internalRelationships: number;
+  afferentCouplings: number;
+  efferentCouplings: number;
 }

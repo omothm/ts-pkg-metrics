@@ -2,8 +2,12 @@ export interface ProjectLoader {
   load(): Promise<PackageModules[]>;
 }
 
-interface PackageModules {
+export interface Module {
+  path: string;
+  content: string;
+}
+
+export interface PackageModules {
   packageName: string;
-  packagePath: string;
-  modules: string[];
+  modules: Module[];
 }
