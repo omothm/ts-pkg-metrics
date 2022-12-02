@@ -1,11 +1,18 @@
 import path from 'node:path';
 import ts from 'typescript';
+import { createMatchPath } from 'tsconfig-paths';
 import ProjectAnalyzer from '../core/analyzer';
 import { Module, PackageModules } from '../core/loader';
 import PackageReport from '../core/report';
 import { NoPackagesError } from '../errors';
 
 export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
+  private matchPath: ReturnType<typeof createMatchPath>;
+
+  constructor(baseUrl?: string, paths?: Record<string, string[]>) {
+    this.matchPath = createMatchPath(baseUrl ?? '.', paths ?? {});
+  }
+
   analyze(packages: readonly PackageModules[]): PackageReport[] {
     if (!packages.length) {
       throw new NoPackagesError();
@@ -22,8 +29,10 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
 
     const externalImports: string[] = [];
 
+    const allModulePaths = this.flattenModules(packages);
+
     packages.forEach((p, i) => {
-      const analyses = p.modules.map((m) => this.analyzeModule(m));
+      const analyses = p.modules.map((m) => this.analyzeModule(p.packageName, m, allModulePaths));
 
       const numAbstract = this.addUp(analyses, 'numAbstract');
       const numClasses = this.addUp(analyses, 'numClasses');
@@ -40,7 +49,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     });
 
     externalImports.forEach((imp) => {
-      const report = reports.find((_, i) => imp.startsWith(packages[i].packageName));
+      const report = reports.find((_, i) => imp.includes(packages[i].packageName));
       if (report) {
         report.afferentCouplings++;
       }
@@ -49,12 +58,12 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     return reports;
   }
 
-  private analyzeModule(module: Module) {
+  private analyzeModule(packageName: string, module: Module, allModulePaths: readonly string[]) {
     const sourceFile = ts.createSourceFile('', module.content, ts.ScriptTarget.Latest);
     const nodes = sourceFile.getChildAt(0).getChildren();
     return {
       ...this.analyzeExports(nodes, sourceFile),
-      ...this.analyzeImports(module.path, nodes, sourceFile),
+      ...this.analyzeImports(packageName, module.path, nodes, sourceFile, allModulePaths),
     };
   }
 
@@ -69,8 +78,20 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     return { numClasses: exports.length, numAbstract };
   }
 
-  private analyzeImports(modulePath: string, nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
-    const importDeclarations = this.getImportDeclarations(modulePath, nodes, sourceFile);
+  private analyzeImports(
+    packageName: string,
+    modulePath: string,
+    nodes: readonly ts.Node[],
+    sourceFile: ts.SourceFile,
+    allModulePaths: readonly string[],
+  ) {
+    const importDeclarations = this.getImportDeclarations(
+      packageName,
+      modulePath,
+      nodes,
+      sourceFile,
+      allModulePaths,
+    );
     const internalImportSymbolCount = importDeclarations.internal.reduce(
       (accTotalSymbolCount, { node }) => {
         const importedSymbols = this.getImportedSymbols(node, sourceFile);
@@ -91,9 +112,11 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
   }
 
   private getImportDeclarations(
-    modulePath: string,
+    packageName: string,
+    importingModule: string,
     nodes: readonly ts.Node[],
     sourceFile: ts.SourceFile,
+    allModulePaths: readonly string[],
   ) {
     interface ImportDeclaration {
       module: string;
@@ -121,10 +144,11 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
         throw new Error('Unreachable');
       }
 
-      const moduleString = moduleStringNode.getText(sourceFile).slice(1, -1); // drop quotes
-      const module = this.getRelativePath(modulePath, moduleString);
+      const importedModule = moduleStringNode.getText(sourceFile).slice(1, -1); // drop quotes
 
-      if (module.startsWith(modulePath)) {
+      const module = this.resolveImportedModule(importedModule, importingModule, allModulePaths);
+
+      if (module.includes(packageName)) {
         declarations.internal.push({ node, module });
       } else {
         declarations.external.push({ node, module });
@@ -176,8 +200,28 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       .map((n) => n.getText(sourceFile));
   }
 
-  private getRelativePath(modulePath: string, module: string) {
-    return path.join(modulePath, module);
+  private resolveImportedModule(
+    importedModule: string,
+    importingModulePath: string,
+    allModulePaths: readonly string[],
+  ) {
+    if (importedModule.startsWith('node:')) {
+      return importedModule;
+    }
+
+    if (importedModule.startsWith('.')) {
+      return path.join(path.dirname(importingModulePath), importedModule);
+    }
+
+    const resolved = this.matchPath(importedModule, undefined, (filename) => {
+      return allModulePaths.some((p) => filename.includes(p));
+    });
+
+    return resolved || importedModule;
+  }
+
+  private flattenModules(packages: readonly PackageModules[]) {
+    return packages.flatMap((p) => p.modules.map((m) => m.path));
   }
 
   /** Adds up the values of a given key for all members of an array. */

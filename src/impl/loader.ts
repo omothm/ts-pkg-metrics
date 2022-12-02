@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { PackageModules, ProjectLoader } from '../core/loader';
 import { DirectoryNotFoundError, EmptyProjectError, NoPackagesError } from '../errors';
 
@@ -31,10 +30,10 @@ export default class DefaultProjectLoader implements ProjectLoader {
   private async loadModules(packageName: string) {
     const files = await this.getDeepFiles(packageName);
     return Promise.all(
-      files.map(async (f) => {
-        const content = (await fs.readFile(`${this.projectDirectory}/${f}`)).toString();
+      files.map(async (path) => {
+        const content = (await fs.readFile(`${this.projectDirectory}/${path}`)).toString();
         return {
-          path: path.dirname(f),
+          path,
           content,
         };
       }),
