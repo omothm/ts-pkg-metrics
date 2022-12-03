@@ -360,6 +360,44 @@ test('couplings: should report number of couplings between packages with tsconfi
   t.like(report[2], { packageName: '/package3', afferentCouplings: 0, efferentCouplings: 1 });
 });
 
+test('couplings: should ignore node modules imports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    createPackage({
+      packageName: '/package1',
+      modules: [
+        `import path from 'path';
+         import m from './module2';
+         import { Y, Z } from './module3';
+         export default class X {
+           constructor(public y = new Y()) {}
+           method(): number {
+              return x(m);
+           }
+         }
+         export function x(m: number): number {
+           return m * 2;
+         }`,
+        `const m = 3;
+         export default m;`,
+        `export class Y {}
+         export class Z {}`,
+      ],
+    }),
+    createPackage({
+      packageName: '/package2',
+      modules: [
+        `import fs from 'node:fs';
+         export interface Greeter {}
+        `,
+      ],
+    }),
+  ]);
+  t.is(report.length, 2);
+  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 0 });
+  t.like(report[1], { packageName: '/package2', afferentCouplings: 0, efferentCouplings: 0 });
+});
+
 class AnalyzerProxy {
   private analyzer: ProjectAnalyzer;
 

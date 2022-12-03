@@ -5,6 +5,7 @@ import ProjectAnalyzer from '../core/analyzer';
 import { Module, PackageModules } from '../core/loader';
 import PackageReport from '../core/report';
 import { NoPackagesError } from '../errors';
+import { stripPrefix } from './util';
 
 export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
   private matchPath: ReturnType<typeof createMatchPath>;
@@ -29,10 +30,13 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
 
     const externalImports: string[] = [];
 
+    const allPackages = packages.map((p) => p.packageName);
     const allModulePaths = this.flattenModules(packages);
 
     packages.forEach((p, i) => {
-      const analyses = p.modules.map((m) => this.analyzeModule(p.packageName, m, allModulePaths));
+      const analyses = p.modules.map((m) =>
+        this.analyzeModule(p.packageName, m, allPackages, allModulePaths),
+      );
 
       const numAbstract = this.addUp(analyses, 'numAbstract');
       const numClasses = this.addUp(analyses, 'numClasses');
@@ -49,7 +53,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     });
 
     externalImports.forEach((imp) => {
-      const report = reports.find((_, i) => imp.includes(packages[i].packageName));
+      const report = reports.find((_, i) => imp.startsWith(packages[i].packageName));
       if (report) {
         report.afferentCouplings++;
       }
@@ -58,12 +62,24 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     return reports;
   }
 
-  private analyzeModule(packageName: string, module: Module, allModulePaths: readonly string[]) {
+  private analyzeModule(
+    packageName: string,
+    module: Module,
+    allPackages: readonly string[],
+    allModulePaths: readonly string[],
+  ) {
     const sourceFile = ts.createSourceFile('', module.content, ts.ScriptTarget.Latest);
     const nodes = sourceFile.getChildAt(0).getChildren();
     return {
       ...this.analyzeExports(nodes, sourceFile),
-      ...this.analyzeImports(packageName, module.path, nodes, sourceFile, allModulePaths),
+      ...this.analyzeImports(
+        packageName,
+        module.path,
+        nodes,
+        sourceFile,
+        allPackages,
+        allModulePaths,
+      ),
     };
   }
 
@@ -83,6 +99,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     modulePath: string,
     nodes: readonly ts.Node[],
     sourceFile: ts.SourceFile,
+    allPackages: readonly string[],
     allModulePaths: readonly string[],
   ) {
     const importDeclarations = this.getImportDeclarations(
@@ -90,6 +107,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       modulePath,
       nodes,
       sourceFile,
+      allPackages,
       allModulePaths,
     );
     const internalImportSymbolCount = importDeclarations.internal.reduce(
@@ -116,6 +134,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     importingModule: string,
     nodes: readonly ts.Node[],
     sourceFile: ts.SourceFile,
+    allPackages: readonly string[],
     allModulePaths: readonly string[],
   ) {
     interface ImportDeclaration {
@@ -148,7 +167,12 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
 
       const module = this.resolveImportedModule(importedModule, importingModule, allModulePaths);
 
-      if (module.includes(packageName)) {
+      // Only analyze imports from detected packages
+      if (!allPackages.some((p) => module.startsWith(p))) {
+        return;
+      }
+
+      if (module.startsWith(packageName)) {
         declarations.internal.push({ node, module });
       } else {
         declarations.external.push({ node, module });
@@ -217,7 +241,12 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       return allModulePaths.some((p) => filename.includes(p));
     });
 
-    return resolved || importedModule;
+    if (!resolved) {
+      return importedModule;
+    }
+
+    // If current working directory was appended to the path, strip it.
+    return stripPrefix(resolved, process.cwd());
   }
 
   private flattenModules(packages: readonly PackageModules[]) {
