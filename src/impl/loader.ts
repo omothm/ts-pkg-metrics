@@ -49,7 +49,14 @@ export default class DefaultProjectLoader implements ProjectLoader {
         if (e.isDirectory()) {
           return this.getDeepFiles(`${parentDir}/${e.name}`);
         }
-        return [`${parentDir}/${e.name}`];
+        if (
+          e.name.endsWith('.ts') &&
+          !e.name.endsWith('.spec.ts') &&
+          !e.name.endsWith('.test.ts')
+        ) {
+          return [`${parentDir}/${e.name}`];
+        }
+        return [];
       }),
     );
     return deepFiles.flat();

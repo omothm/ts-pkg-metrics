@@ -6,10 +6,15 @@ import MetricsFacade from './impl/facade';
 import DefaultProjectLoader from './impl/loader';
 import DefaultReporter from './reporters/default';
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 
 async function main() {
-  const projectDirectory = path.resolve(process.argv[2] ?? process.cwd());
+  /* c8 ignore next */
+  const projectDirectory = process.argv[2] ? path.resolve(process.argv[2]) : process.cwd();
+
   const loader = new DefaultProjectLoader(projectDirectory);
   const analyzer = new DefaultProjectAnalyzer();
   const facade = new MetricsFacade(loader, analyzer);

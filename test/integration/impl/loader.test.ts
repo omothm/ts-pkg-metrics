@@ -13,26 +13,26 @@ import config from '../config';
 test.beforeEach(() => createTestDirectory());
 test.after.always(() => cleanupTestDirectory());
 
-test.serial('should throw if project directory does not exist', async (t) => {
+test('should throw if project directory does not exist', async (t) => {
   const loader = new LoaderProxy('nonExistingProject');
   await t.throwsAsync(loader.load(), { instanceOf: DirectoryNotFoundError });
 });
 
-test.serial('should throw if project directory is empty', async (t) => {
+test('should throw if project directory is empty', async (t) => {
   const projectName = 'emptyProject';
   const loader = new LoaderProxy(projectName);
   await createDirectoryRecursively(projectName);
   await t.throwsAsync(loader.load(), { instanceOf: EmptyProjectError });
 });
 
-test.serial('should throw if project directory contains no folders', async (t) => {
+test('should throw if project directory contains no folders', async (t) => {
   const projectName = 'testProject';
   const loader = new LoaderProxy(projectName);
   await createFile(`${projectName}/index.ts`);
   await t.throwsAsync(loader.load(), { instanceOf: NoPackagesError });
 });
 
-test.serial('should detect folders as packages but not files', async (t) => {
+test('should detect folders as packages but not files', async (t) => {
   const projectName = 'testProject';
   const loader = new LoaderProxy(projectName);
   await createFile(`${projectName}/index.ts`);

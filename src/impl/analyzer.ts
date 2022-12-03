@@ -194,21 +194,23 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       throw new Error('Unreachable');
     }
 
-    const importClauseFirstChild = importClause.getChildAt(0);
-
-    /* c8 ignore next 3 */
-    if (!importClauseFirstChild) {
-      throw new Error('Unreachable');
-    }
+    const importsNode =
+      importClause.getChildAt(0).kind === ts.SyntaxKind.TypeKeyword
+        ? importClause.getChildAt(1)
+        : importClause.getChildAt(0);
 
     // default import
-    if (importClauseFirstChild.kind === ts.SyntaxKind.Identifier) {
-      return [importClauseFirstChild.getText(sourceFile)];
+    if (importsNode.kind === ts.SyntaxKind.Identifier) {
+      return [importsNode.getText(sourceFile)];
+    }
+
+    if (importsNode.kind === ts.SyntaxKind.NamespaceImport) {
+      return ['*'];
     }
 
     // named imports
     const importSpecifiersParentNode = this.nodeDeepFind(
-      importClauseFirstChild,
+      importsNode,
       sourceFile,
       (n) => n.kind === ts.SyntaxKind.SyntaxList,
     );

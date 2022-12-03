@@ -300,9 +300,9 @@ test('couplings: should report number of couplings between packages with tsconfi
         {
           path: '/package1/module1.ts',
           content: `
-            import m from './module2';
+            import * as m from './module2';
             import { Y, Z } from './module3';
-            import { Greeter } from '@p2/module1';
+            import type { Greeter } from '@p2/module1';
             export default class X implements Greeter {
               constructor(public y = new Y()) {}
               method(): number {
