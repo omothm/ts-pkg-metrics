@@ -84,8 +84,10 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
   }
 
   private analyzeExports(nodes: readonly ts.Node[], sourceFile: ts.SourceFile) {
-    const exports = nodes.filter((node) =>
-      this.nodeDeeplySatisfies(node, sourceFile, (n) => n.kind === ts.SyntaxKind.ExportKeyword),
+    const exports = nodes.filter(
+      (node) =>
+        this.nodeDeeplySatisfies(node, sourceFile, (n) => n.kind === ts.SyntaxKind.ExportKeyword) &&
+        !this.nodeDeepFind(node, sourceFile, (n) => n.kind === ts.SyntaxKind.FromKeyword),
     );
     const numAbstract = exports.reduce(
       (acc, cur) => acc + (this.nodeIsAbstract(cur, sourceFile) ? 1 : 0),
@@ -257,7 +259,17 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
   }
 
   private flattenModules(packages: readonly PackageModules[]) {
-    return packages.flatMap((p) => p.modules.map((m) => m.path));
+    return packages.flatMap((p) =>
+      p.modules.flatMap((m) => {
+        const paths = [m.path];
+        if (m.path.endsWith('/index.ts')) {
+          paths.push(m.path.substring(0, m.path.length - 9));
+        } else if (m.path.endsWith('/index.d.ts')) {
+          paths.push(m.path.substring(0, m.path.length - 11));
+        }
+        return paths;
+      }),
+    );
   }
 
   /** Adds up the values of a given key for all members of an array. */

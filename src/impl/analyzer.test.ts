@@ -397,6 +397,74 @@ test('couplings: should ignore node modules imports', (t) => {
   t.like(report[0], { packageName: 'package1', afferentCouplings: 0, efferentCouplings: 0 });
   t.like(report[1], { packageName: 'package2', afferentCouplings: 0, efferentCouplings: 0 });
 });
+
+test('couplings: should count index.ts and index.d.ts imports', (t) => {
+  const analyzer = new AnalyzerProxy();
+  const report = analyzer.analyze([
+    createPackage({
+      packageName: 'package1',
+      modules: [
+        {
+          path: 'package1/module1.ts',
+          content: `
+            import m from './module2';
+            import { Y, Z } from '.';
+            import { Greeter } from '../package2';
+            export default class X implements Greeter {
+              constructor(public y = new Y()) {}
+              method(): number {
+                return x(m);
+              }
+            }
+            export function x(m: number): number {
+              return m * 2;
+            }
+          `,
+        },
+        {
+          path: 'package1/module2.ts',
+          content: `
+            const m = 3;
+            export default m;
+          `,
+        },
+        {
+          path: 'package1/index.ts',
+          content: `
+            export class Y {}
+            export class Z {}
+          `,
+        },
+      ],
+    }),
+    createPackage({
+      packageName: 'package2',
+      modules: [
+        {
+          path: 'package2/index.d.ts',
+          content: `
+            export interface Greeter {}
+          `,
+        },
+      ],
+    }),
+    createPackage({
+      packageName: 'package3',
+      modules: [
+        {
+          path: 'package3/module1.ts',
+          content: `
+            import { Greeter } from '../package2';
+            export default class AnotherGreeter implements Greeter {}
+          `,
+        },
+      ],
+    }),
+  ]);
+  t.is(report.length, 3);
+  t.like(report[0], { packageName: 'package1', afferentCouplings: 0, efferentCouplings: 1 });
+  t.like(report[1], { packageName: 'package2', afferentCouplings: 2, efferentCouplings: 0 });
+  t.like(report[2], { packageName: 'package3', afferentCouplings: 0, efferentCouplings: 1 });
 });
 
 class AnalyzerProxy {
