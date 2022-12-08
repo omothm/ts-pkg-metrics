@@ -88,7 +88,7 @@ one.
 
 A metric that combines both _N_ and _R_ and is calculated as follows:
 
-<p style="text-align:center"><em>H</em> = (<em>R</em> + 1) / <em>N</em></p>
+_H_ = (_R_ + 1) / _N_
 
 The higher this metric, the better.
 
@@ -113,15 +113,13 @@ This metric represents how dependent this package is on other packages.
 
 The sum of all _C<sub>a</sub>_ values is always equal to the sum of all _C<sub>e</sub>_ values:
 
-<p style="text-align:center">&Sigma; <em>C<sub>a</sub></em> = &Sigma; <em>C<sub>e</sub></em></p>
+&Sigma; _C<sub>a</sub>_ = &Sigma; _C<sub>e</sub>_
 
 ### _I_ &ndash; Instability
 
 A metric that combines both _C<sub>a</sub>_ and _C<sub>e</sub>_ and is calculated as follows:
 
-<p style="text-align:center">
-    <em>I</em> = <em>C<sub>e</sub></em> / (<em>C<sub>a</sub></em> + <em>C<sub>e</sub></em>)
-</p>
+_I_ = _C<sub>e</sub>_ / (_C<sub>a</sub>_ + _C<sub>e</sub>_)
 
 _I_ falls within the range (0,1), where 0 means a completely stable package and 1 means a
 completely instable package. Here, instability isn't a bad thing: it means that this package is
@@ -135,7 +133,7 @@ This metric measures how far this package is from the "sweet spot" of instabilit
 In short, a fully abstract package should be fully stable, and a fully concrete package should be
 fully instable:
 
-<p style="text-align:center"><em>D</em> = | <em>A</em> + <em>I</em> &minus; 1 |</p>
+_D_ = | _A_ + _I_ &minus; 1 |
 
 _D_ falls within the range (0,1). The lower this metric, the better.
 
