@@ -10,16 +10,16 @@ test('should throw if no packages', (t) => {
 
 test('numClasses: should report 0 classes for empty package', (t) => {
   const analyzer = new AnalyzerProxy();
-  const report = analyzer.analyze([createPackage({ packageName: '/package1', modules: [] })]);
+  const report = analyzer.analyze([createPackage({ packageName: 'package1', modules: [] })]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', numClasses: 0 });
+  t.like(report[0], { packageName: 'package1', numClasses: 0 });
 });
 
 test('numClasses: should report correct number of exported classes (members)', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `export default class Class1 {}
          function a() { class X {} }`,
@@ -34,21 +34,21 @@ test('numClasses: should report correct number of exported classes (members)', (
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', numClasses: 5 });
+  t.like(report[0], { packageName: 'package1', numClasses: 5 });
 });
 
 test('abstractness: should report NaN abstractness for empty package', (t) => {
   const analyzer = new AnalyzerProxy();
-  const report = analyzer.analyze([createPackage({ packageName: '/package1', modules: [] })]);
+  const report = analyzer.analyze([createPackage({ packageName: 'package1', modules: [] })]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', abstractness: NaN });
+  t.like(report[0], { packageName: 'package1', abstractness: NaN });
 });
 
 test('abstractness: should report 0 abstractness for all-concrete exports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `export default class X {}
          export function x() {}`,
@@ -62,14 +62,14 @@ test('abstractness: should report 0 abstractness for all-concrete exports', (t) 
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', abstractness: 0 });
+  t.like(report[0], { packageName: 'package1', abstractness: 0 });
 });
 
 test('abstractness: should report 1 abstractness for all-abstract exports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         'export default interface I {}',
         'export abstract class S {}',
@@ -79,14 +79,14 @@ test('abstractness: should report 1 abstractness for all-abstract exports', (t) 
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', abstractness: 1 });
+  t.like(report[0], { packageName: 'package1', abstractness: 1 });
 });
 
 test('abstractness: should report ratio of abstract exports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `const m = 3;
          export default m;`,
@@ -98,14 +98,14 @@ test('abstractness: should report ratio of abstract exports', (t) => {
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', abstractness: 0.75 });
+  t.like(report[0], { packageName: 'package1', abstractness: 0.75 });
 });
 
 test('internalRelationships: should report 0 package with no package-internal imports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `import path from 'path';
          export default class X {}
@@ -121,14 +121,14 @@ test('internalRelationships: should report 0 package with no package-internal im
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', internalRelationships: 0 });
+  t.like(report[0], { packageName: 'package1', internalRelationships: 0 });
 });
 
 test('internalRelationships: should report number of package-internal imports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `import m from './module2';
          import { Y, Z } from './module3';
@@ -152,14 +152,14 @@ test('internalRelationships: should report number of package-internal imports', 
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', internalRelationships: 3 });
+  t.like(report[0], { packageName: 'package1', internalRelationships: 3 });
 });
 
 test('internalRelationships: should report package-internal imports with tsconfig paths', (t) => {
   const analyzer = new AnalyzerProxy('.', { '@p1/*': ['package1/*'] });
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `import m from '@p1/module2';
          import { Y, Z } from '@p1/module3';
@@ -183,14 +183,14 @@ test('internalRelationships: should report package-internal imports with tsconfi
     }),
   ]);
   t.is(report.length, 1);
-  t.like(report[0], { packageName: '/package1', internalRelationships: 3 });
+  t.like(report[0], { packageName: 'package1', internalRelationships: 3 });
 });
 
 test('couplings: should report 0 couplings for non-coupled packages', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `import m from './module2';
          import { Y, Z } from './module3';
@@ -210,7 +210,7 @@ test('couplings: should report 0 couplings for non-coupled packages', (t) => {
       ],
     }),
     createPackage({
-      packageName: '/package2',
+      packageName: 'package2',
       modules: [
         `export interface Greeter {}
         `,
@@ -218,18 +218,18 @@ test('couplings: should report 0 couplings for non-coupled packages', (t) => {
     }),
   ]);
   t.is(report.length, 2);
-  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 0 });
-  t.like(report[1], { packageName: '/package2', afferentCouplings: 0, efferentCouplings: 0 });
+  t.like(report[0], { packageName: 'package1', afferentCouplings: 0, efferentCouplings: 0 });
+  t.like(report[1], { packageName: 'package2', afferentCouplings: 0, efferentCouplings: 0 });
 });
 
 test('couplings: should report number of couplings between packages', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         {
-          path: '/package1/module1.ts',
+          path: 'package1/module1.ts',
           content: `
             import m from './module2';
             import { Y, Z } from './module3';
@@ -246,14 +246,14 @@ test('couplings: should report number of couplings between packages', (t) => {
           `,
         },
         {
-          path: '/package1/module2.ts',
+          path: 'package1/module2.ts',
           content: `
             const m = 3;
             export default m;
           `,
         },
         {
-          path: '/package1/module3.ts',
+          path: 'package1/module3.ts',
           content: `
             export class Y {}
             export class Z {}
@@ -262,10 +262,10 @@ test('couplings: should report number of couplings between packages', (t) => {
       ],
     }),
     createPackage({
-      packageName: '/package2',
+      packageName: 'package2',
       modules: [
         {
-          path: '/package2/module1.ts',
+          path: 'package2/module1.ts',
           content: `
             export interface Greeter {}
           `,
@@ -273,10 +273,10 @@ test('couplings: should report number of couplings between packages', (t) => {
       ],
     }),
     createPackage({
-      packageName: '/package3',
+      packageName: 'package3',
       modules: [
         {
-          path: '/package3/module1.ts',
+          path: 'package3/module1.ts',
           content: `
             import { Greeter } from '../package2/module1';
             export default class AnotherGreeter implements Greeter {}
@@ -286,19 +286,19 @@ test('couplings: should report number of couplings between packages', (t) => {
     }),
   ]);
   t.is(report.length, 3);
-  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 1 });
-  t.like(report[1], { packageName: '/package2', afferentCouplings: 2, efferentCouplings: 0 });
-  t.like(report[2], { packageName: '/package3', afferentCouplings: 0, efferentCouplings: 1 });
+  t.like(report[0], { packageName: 'package1', afferentCouplings: 0, efferentCouplings: 1 });
+  t.like(report[1], { packageName: 'package2', afferentCouplings: 2, efferentCouplings: 0 });
+  t.like(report[2], { packageName: 'package3', afferentCouplings: 0, efferentCouplings: 1 });
 });
 
 test('couplings: should report number of couplings between packages with tsconfig paths', (t) => {
   const analyzer = new AnalyzerProxy('.', { '@p2/*': ['package2/*'] });
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         {
-          path: '/package1/module1.ts',
+          path: 'package1/module1.ts',
           content: `
             import * as m from './module2';
             import { Y, Z } from './module3';
@@ -315,14 +315,14 @@ test('couplings: should report number of couplings between packages with tsconfi
           `,
         },
         {
-          path: '/package1/module2.ts',
+          path: 'package1/module2.ts',
           content: `
             const m = 3;
             export default m;
           `,
         },
         {
-          path: '/package1/module3.ts',
+          path: 'package1/module3.ts',
           content: `
             export class Y {}
             export class Z {}
@@ -331,10 +331,10 @@ test('couplings: should report number of couplings between packages with tsconfi
       ],
     }),
     createPackage({
-      packageName: '/package2',
+      packageName: 'package2',
       modules: [
         {
-          path: '/package2/module1.ts',
+          path: 'package2/module1.ts',
           content: `
             export interface Greeter {}
           `,
@@ -342,10 +342,10 @@ test('couplings: should report number of couplings between packages with tsconfi
       ],
     }),
     createPackage({
-      packageName: '/package3',
+      packageName: 'package3',
       modules: [
         {
-          path: '/package3/module1.ts',
+          path: 'package3/module1.ts',
           content: `
             import { Greeter } from '@p2/module1';
             export default class AnotherGreeter implements Greeter {}
@@ -355,16 +355,16 @@ test('couplings: should report number of couplings between packages with tsconfi
     }),
   ]);
   t.is(report.length, 3);
-  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 1 });
-  t.like(report[1], { packageName: '/package2', afferentCouplings: 2, efferentCouplings: 0 });
-  t.like(report[2], { packageName: '/package3', afferentCouplings: 0, efferentCouplings: 1 });
+  t.like(report[0], { packageName: 'package1', afferentCouplings: 0, efferentCouplings: 1 });
+  t.like(report[1], { packageName: 'package2', afferentCouplings: 2, efferentCouplings: 0 });
+  t.like(report[2], { packageName: 'package3', afferentCouplings: 0, efferentCouplings: 1 });
 });
 
 test('couplings: should ignore node modules imports', (t) => {
   const analyzer = new AnalyzerProxy();
   const report = analyzer.analyze([
     createPackage({
-      packageName: '/package1',
+      packageName: 'package1',
       modules: [
         `import path from 'path';
          import m from './module2';
@@ -385,7 +385,7 @@ test('couplings: should ignore node modules imports', (t) => {
       ],
     }),
     createPackage({
-      packageName: '/package2',
+      packageName: 'package2',
       modules: [
         `import fs from 'node:fs';
          export interface Greeter {}
@@ -394,8 +394,9 @@ test('couplings: should ignore node modules imports', (t) => {
     }),
   ]);
   t.is(report.length, 2);
-  t.like(report[0], { packageName: '/package1', afferentCouplings: 0, efferentCouplings: 0 });
-  t.like(report[1], { packageName: '/package2', afferentCouplings: 0, efferentCouplings: 0 });
+  t.like(report[0], { packageName: 'package1', afferentCouplings: 0, efferentCouplings: 0 });
+  t.like(report[1], { packageName: 'package2', afferentCouplings: 0, efferentCouplings: 0 });
+});
 });
 
 class AnalyzerProxy {
