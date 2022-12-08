@@ -10,7 +10,7 @@ import { stripPrefix } from './util';
 export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
   private matchPath: ReturnType<typeof createMatchPath>;
 
-  constructor(baseUrl?: string, paths?: Record<string, string[]>) {
+  constructor(private projectDirectory = '', baseUrl?: string, paths?: Record<string, string[]>) {
     this.matchPath = createMatchPath(baseUrl ?? '.', paths ?? {});
   }
 
@@ -255,7 +255,7 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     }
 
     // If current working directory was appended to the path, strip it.
-    return stripPrefix(resolved, process.cwd());
+    return stripPrefix(resolved, `${path.resolve(this.projectDirectory)}/`);
   }
 
   private flattenModules(packages: readonly PackageModules[]) {

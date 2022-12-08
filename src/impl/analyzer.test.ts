@@ -471,7 +471,7 @@ class AnalyzerProxy {
   private analyzer: ProjectAnalyzer;
 
   constructor(baseUrl?: string, paths?: Record<string, string[]>) {
-    this.analyzer = new DefaultProjectAnalyzer(baseUrl, paths);
+    this.analyzer = new DefaultProjectAnalyzer('.', baseUrl, paths);
   }
 
   analyze(packages: ReturnType<typeof createPackage>[]): PackageReport[] {
