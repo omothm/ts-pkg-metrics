@@ -239,9 +239,14 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
       return path.join(path.dirname(importingModulePath), importedModule);
     }
 
-    const resolved = this.matchPath(importedModule, undefined, (filename) => {
-      return allModulePaths.some((p) => filename.includes(p));
-    });
+    const resolved = this.matchPath(
+      importedModule,
+      undefined,
+      (filename) => {
+        return allModulePaths.some((p) => filename.includes(p));
+      },
+      ['.ts', '.d.ts'],
+    );
 
     if (!resolved) {
       return importedModule;
