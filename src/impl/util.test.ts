@@ -14,3 +14,7 @@ test('stripPrefix: should return same string if prefix not found', (t) => {
 test('stripPrefix: should return stripped string if prefix found', (t) => {
   t.is(stripPrefix('hello world', 'hello '), 'world');
 });
+
+test('stripPrefix: should strip only one occurrence of prefix', (t) => {
+  t.is(stripPrefix('hello hello world', 'hello '), 'hello world');
+});
