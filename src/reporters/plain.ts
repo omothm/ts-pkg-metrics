@@ -1,7 +1,7 @@
 import PackageReport from '../core/report';
 import Reporter from '../core/reporter';
 
-export default class DefaultReporter implements Reporter {
+export default class PlainReporter implements Reporter {
   report(reports: PackageReport[]): void {
     const mappedReports = Object.fromEntries(
       reports.map((r) => {

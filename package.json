@@ -48,6 +48,10 @@
     ]
   },
   "dependencies": {
+    "cli-table3": "^0.6.3",
+    "colors": "^1.4.0",
+    "commander": "^9.4.1",
+    "ts-schema-parser": "^0.4.0",
     "tsconfig-paths": "^4.1.0"
   },
   "devDependencies": {
