@@ -80,6 +80,7 @@ function parseArgs() {
   const stringArraySchema = S.array(stringSchema);
   const reporterSchema = S.enum(...reportTypes);
 
+  /* c8 ignore next 5 */
   return {
     projectDir: projectDir ? stringSchema.parse(projectDir) : undefined,
     safePackages: stringArraySchema.parse(options.safe ?? []),
