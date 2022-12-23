@@ -43,7 +43,7 @@ export default class GraphReporter implements Reporter {
           instability: 'I',
           safe: 'S',
           normalDistance: 'D',
-          graph: ' Painful <│> Useless ',
+          graph: ' Painful ⟨┼⟩ Useless ',
         },
         (value) => (typeof value === 'string' ? value : value.text),
       ),
@@ -63,7 +63,6 @@ export default class GraphReporter implements Reporter {
     });
 
     reportsWithMetrics.forEach((r) => {
-      const barLength = Math.abs(Number(r.normalDistance.toFixed(1))) * 10;
       table.push(
         this.rowToArray(
           {
@@ -80,12 +79,7 @@ export default class GraphReporter implements Reporter {
               text: colors.bold(colors.yellow(r.normalDistance.toFixed(1))),
               align: 'right',
             },
-            graph: colors[barLength < 2 ? 'green' : barLength < 5 ? 'yellow' : 'red'](
-              `${
-                ' '.repeat(r.normalDistance < 0 ? 10 - barLength : 10) +
-                (r.normalDistance < 0 && barLength > 0 ? '*' + '─'.repeat(barLength - 1) : '')
-              }│${r.normalDistance > 0 && barLength > 0 ? '─'.repeat(barLength - 1) + '*' : ''}`,
-            ),
+            graph: this.drawBar(r.normalDistance),
           },
           (value) =>
             typeof value === 'string' ? value : { content: value.text, hAlign: value.align },
@@ -93,6 +87,19 @@ export default class GraphReporter implements Reporter {
       );
     });
     console.log(table.toString());
+  }
+
+  private drawBar(normalDistance: number) {
+    const barLength = Math.abs(Number(normalDistance.toFixed(1))) * 10;
+    const color = barLength < 2 ? 'green' : barLength < 5 ? 'yellow' : 'red';
+    const head = '⏺';
+    const stem = '─';
+    const leftSide =
+      ' '.repeat(normalDistance < 0 ? 10 - barLength : 10) +
+      (normalDistance < 0 && barLength > 0 ? head + stem.repeat(barLength - 1) : '');
+    const middle = normalDistance < 0 ? '┤' : normalDistance > 0 ? '├' : '│';
+    const rightSide = normalDistance > 0 && barLength > 0 ? stem.repeat(barLength - 1) + head : '';
+    return colors[color](`${leftSide}${middle}${rightSide}`);
   }
 
   private rowToArray<T>(row: TableRow, transform: (value: TableCell) => T): T[] {
