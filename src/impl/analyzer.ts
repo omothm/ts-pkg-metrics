@@ -3,7 +3,7 @@ import ts from 'typescript';
 import { createMatchPath } from 'tsconfig-paths';
 import ProjectAnalyzer from '../core/analyzer';
 import { Module, PackageModules } from '../core/loader';
-import PackageReport from '../core/report';
+import PackageAnalysis from '../core/analysis';
 import { NoPackagesError } from '../errors';
 import { stripPrefix } from './util';
 
@@ -14,12 +14,12 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     this.matchPath = createMatchPath(baseUrl ?? '.', paths ?? {});
   }
 
-  analyze(packages: readonly PackageModules[]): PackageReport[] {
+  analyze(packages: readonly PackageModules[]): PackageAnalysis[] {
     if (!packages.length) {
       throw new NoPackagesError();
     }
 
-    const reports = packages.map<PackageReport>((p) => ({
+    const analyses = packages.map<PackageAnalysis>((p) => ({
       packageName: p.packageName,
       numClasses: 0,
       abstractness: 0,
@@ -34,18 +34,18 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     const allModulePaths = this.flattenModules(packages);
 
     packages.forEach((p, i) => {
-      const analyses = p.modules.map((m) =>
+      const packageAnalyses = p.modules.map((m) =>
         this.analyzeModule(p.packageName, m, allPackages, allModulePaths),
       );
 
-      const numAbstract = this.addUp(analyses, 'numAbstract');
-      const numClasses = this.addUp(analyses, 'numClasses');
-      const internalRelationships = this.addUp(analyses, 'internalRelationships');
+      const numAbstract = this.addUp(packageAnalyses, 'numAbstract');
+      const numClasses = this.addUp(packageAnalyses, 'numClasses');
+      const internalRelationships = this.addUp(packageAnalyses, 'internalRelationships');
 
-      const packageExternalImports = analyses.flatMap((a) => a.externalImports);
+      const packageExternalImports = packageAnalyses.flatMap((a) => a.externalImports);
       externalImports.push(...packageExternalImports);
 
-      const report = reports[i];
+      const report = analyses[i];
       report.numClasses = numClasses;
       report.abstractness = numAbstract / numClasses;
       report.internalRelationships = internalRelationships;
@@ -53,13 +53,13 @@ export default class DefaultProjectAnalyzer implements ProjectAnalyzer {
     });
 
     externalImports.forEach((imp) => {
-      const report = reports.find((_, i) => imp.startsWith(packages[i].packageName));
+      const report = analyses.find((_, i) => imp.startsWith(packages[i].packageName));
       if (report) {
         report.afferentCouplings++;
       }
     });
 
-    return reports;
+    return analyses;
   }
 
   private analyzeModule(

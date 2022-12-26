@@ -1,4 +1,4 @@
-export default interface PackageReport {
+export default interface PackageAnalysis {
   packageName: string;
   numClasses: number;
   abstractness: number;

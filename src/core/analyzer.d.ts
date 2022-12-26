@@ -1,6 +1,6 @@
 import { PackageModules } from './loader';
-import PackageReport from './report';
+import PackageAnalysis from './analysis';
 
 export default interface ProjectAnalyzer {
-  analyze(project: readonly PackageModules[]): PackageReport[];
+  analyze(project: readonly PackageModules[]): PackageAnalysis[];
 }

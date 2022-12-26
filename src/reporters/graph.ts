@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import colors from 'colors/safe';
-import PackageReport from '../core/report';
+import PackageAnalysis from '../core/analysis';
 import Reporter from '../core/reporter';
 
 type TableCell = string | { text: string; align?: 'center' | 'left' | 'right' };
@@ -19,7 +19,7 @@ interface TableRow {
   graph: TableCell;
 }
 
-interface PackageReportWithMetrics extends PackageReport {
+interface PackageReport extends PackageAnalysis {
   relationalCohesion: number;
   instability: number;
   safe: number;
@@ -29,7 +29,7 @@ interface PackageReportWithMetrics extends PackageReport {
 export default class GraphReporter implements Reporter {
   constructor(private safePackages: string[]) {}
 
-  report(reports: PackageReport[]): void {
+  report(analyses: PackageAnalysis[]): void {
     const table = new Table({
       head: this.rowToArray(
         {
@@ -50,7 +50,7 @@ export default class GraphReporter implements Reporter {
       chars: { 'left-mid': '', mid: '', 'mid-mid': '', 'right-mid': '' },
     });
 
-    const reportsWithMetrics: PackageReportWithMetrics[] = reports.map((r) => {
+    const reports: PackageReport[] = analyses.map((r) => {
       const instability = r.efferentCouplings / (r.efferentCouplings + r.afferentCouplings);
       const safe = this.safePackages.includes(r.packageName) ? 1 : 0;
       return {
@@ -62,7 +62,7 @@ export default class GraphReporter implements Reporter {
       };
     });
 
-    reportsWithMetrics.forEach((r) => {
+    reports.forEach((r) => {
       table.push(
         this.rowToArray(
           {

@@ -474,7 +474,7 @@ class AnalyzerProxy {
     this.analyzer = new DefaultProjectAnalyzer('.', baseUrl, paths);
   }
 
-  analyze(packages: ReturnType<typeof createPackage>[]): PackageReport[] {
+  analyze(packages: ReturnType<typeof createPackage>[]): PackageAnalysis[] {
     return this.analyzer.analyze(packages);
   }
 }
@@ -491,7 +491,7 @@ function createPackage(params: {
   };
 }
 
-interface PackageReport {
+interface PackageAnalysis {
   packageName: string;
   numClasses: number;
   abstractness: number;
