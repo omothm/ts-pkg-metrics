@@ -1,5 +1,5 @@
 import test from 'ava';
-import ProjectAnalyzer from '../core/analyzer';
+import { ProjectAnalyzer } from '../core';
 import { NoPackagesError } from '../errors';
 import DefaultProjectAnalyzer from './analyzer';
 

@@ -1,9 +1,7 @@
 import path from 'node:path';
 import ts from 'typescript';
 import { createMatchPath } from 'tsconfig-paths';
-import ProjectAnalyzer from '../core/analyzer';
-import { Module, PackageModules } from '../core/loader';
-import PackageAnalysis from '../core/analysis';
+import { Module, PackageAnalysis, PackageModules, ProjectAnalyzer } from '../core';
 import { NoPackagesError } from '../errors';
 import { stripPrefix } from './util';
 

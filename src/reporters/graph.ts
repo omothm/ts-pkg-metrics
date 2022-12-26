@@ -1,7 +1,6 @@
 import Table from 'cli-table3';
 import colors from 'colors/safe';
-import PackageAnalysis from '../core/analysis';
-import Reporter from '../core/reporter';
+import { PackageAnalysis, Reporter } from '../core';
 
 type TableCell = string | { text: string; align?: 'center' | 'left' | 'right' };
 

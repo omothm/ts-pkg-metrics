@@ -1,5 +1,4 @@
-import PackageAnalysis from '../core/analysis';
-import Reporter from '../core/reporter';
+import { PackageAnalysis, Reporter } from '../core';
 
 export default class PlainReporter implements Reporter {
   report(reports: PackageAnalysis[]): void {

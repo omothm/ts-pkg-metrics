@@ -1,5 +1,5 @@
-import PackageAnalysis from './analysis';
+import { PackageAnalysis } from '.';
 
-export default interface Reporter {
+export interface Reporter {
   report(analyses: PackageAnalysis[]): void;
 }

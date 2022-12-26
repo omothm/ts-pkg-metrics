@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { PackageModules, ProjectLoader } from '../core/loader';
+import { PackageModules, ProjectLoader } from '../core';
 import { DirectoryNotFoundError, EmptyProjectError, NoPackagesError } from '../errors';
 
 export default class DefaultProjectLoader implements ProjectLoader {

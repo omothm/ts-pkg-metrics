@@ -1,6 +1,4 @@
-import ProjectAnalyzer from '../core/analyzer';
-import { ProjectLoader } from '../core/loader';
-import PackageAnalysis from '../core/analysis';
+import { PackageAnalysis, ProjectAnalyzer, ProjectLoader } from '../core';
 
 export default class MetricsFacade {
   constructor(private loader: ProjectLoader, private analyzer: ProjectAnalyzer) {}

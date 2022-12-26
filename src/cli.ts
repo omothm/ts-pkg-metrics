@@ -8,7 +8,7 @@ import DefaultProjectAnalyzer from './impl/analyzer';
 import MetricsFacade from './impl/facade';
 import DefaultProjectLoader from './impl/loader';
 import PlainReporter from './reporters/plain';
-import Reporter from './core/reporter';
+import { Reporter } from './core';
 import GraphReporter from './reporters/graph';
 
 const reportTypes = ['plain', 'graph'] as const;
