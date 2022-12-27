@@ -1,5 +1,5 @@
-import { PackageReport } from '.';
+import { ProjectReport } from '.';
 
 export interface Reporter {
-  report(reports: readonly PackageReport[]): number;
+  report(reports: ProjectReport): number;
 }

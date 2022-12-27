@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import c from 'colors/safe';
-import { PackageReport, Reporter } from '../core';
+import { MetricReport, ProjectReport, Reporter } from '../core';
 
 type TableCell = string | { text: string; align?: 'center' | 'left' | 'right' };
 
@@ -22,7 +22,7 @@ export default class GraphReporter implements Reporter {
   private head = '⏺';
   private stem = '─';
 
-  report(reports: readonly PackageReport[]): number {
+  report(report: ProjectReport): number {
     const table = new Table({
       head: this.rowToArray(
         {
@@ -43,7 +43,7 @@ export default class GraphReporter implements Reporter {
       chars: { 'left-mid': '', mid: '', 'mid-mid': '', 'right-mid': '' },
     });
 
-    reports.forEach((r) => {
+    report.packages.forEach((r) => {
       table.push(
         this.rowToArray(
           {
@@ -70,7 +70,17 @@ export default class GraphReporter implements Reporter {
       );
     });
     console.log(table.toString());
+    this.printMetric('Cohesion', report.metrics.cohesion);
+    this.printMetric('Distance', report.metrics.distance);
     return 0;
+  }
+
+  private printMetric(name: string, metric: MetricReport): void {
+    console.log(
+      `${name}\tthresh: ${metric.threshold}\tavg: ${metric.average.toFixed(2)}\toffending: ${Number(
+        metric.offendingPackageRatio * 100,
+      ).toFixed()}%`,
+    );
   }
 
   private drawCohesionBar(cohesion: number) {

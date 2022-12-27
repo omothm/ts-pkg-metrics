@@ -4,5 +4,6 @@ export * from './loader';
 export * from './module';
 export * from './modules';
 export * from './packageReport';
+export * from './project-report';
 export * from './report-compiler';
 export * from './reporter';

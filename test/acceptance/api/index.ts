@@ -33,7 +33,7 @@ class FacadeProxy {
   constructor(projectDirectory: string) {
     const loader = new DefaultProjectLoader(projectDirectory);
     const analyzer = new DefaultProjectAnalyzer();
-    const reportCompiler = new DefaultReportCompiler([]);
+    const reportCompiler = new DefaultReportCompiler([], 1, 0.1);
     this.facade = new MetricsFacade(loader, analyzer, reportCompiler);
   }
 
@@ -42,7 +42,7 @@ class FacadeProxy {
       throw new Error('Facade not constructed');
     }
     const results = await this.facade.analyze();
-    return results;
+    return results.packages;
   }
 }
 

@@ -1,4 +1,4 @@
-import { PackageReport, ProjectAnalyzer, ProjectLoader, ReportCompiler } from '../core';
+import { ProjectAnalyzer, ProjectLoader, ProjectReport, ReportCompiler } from '../core';
 
 export default class MetricsFacade {
   constructor(
@@ -7,7 +7,7 @@ export default class MetricsFacade {
     private reportCompiler: ReportCompiler,
   ) {}
 
-  async analyze(): Promise<PackageReport[]> {
+  async analyze(): Promise<ProjectReport> {
     const modules = await this.loader.load();
     const analysis = this.analyzer.analyze(modules);
     const report = this.reportCompiler.compile(analysis);

@@ -1,9 +1,9 @@
-import { PackageReport, Reporter } from '../core';
+import { ProjectReport, Reporter } from '../core';
 
 export default class PlainReporter implements Reporter {
-  report(reports: readonly PackageReport[]): number {
+  report(report: ProjectReport): number {
     const mappedReports = Object.fromEntries(
-      reports.map((r) => {
+      report.packages.map((r) => {
         const relationalCohesion = (r.internalRelationships + 1) / r.numClasses;
         const instability = r.efferentCouplings / (r.efferentCouplings + r.afferentCouplings);
         const normalDistance = Math.abs(r.abstractness + instability - 1);

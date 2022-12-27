@@ -35,7 +35,7 @@ async function main() {
   const { baseUrl, paths } = loadTsConfig(options.tsConfigDir);
   const analyzer = new DefaultProjectAnalyzer(projectDirectory, baseUrl, paths);
 
-  const reportCompiler = new DefaultReportCompiler(options.safePackages);
+  const reportCompiler = new DefaultReportCompiler(options.safePackages, 1, 0.1);
 
   const facade = new MetricsFacade(loader, analyzer, reportCompiler);
   const reports = await facade.analyze();
