@@ -1,7 +1,7 @@
 import { PackageReport, Reporter } from '../core';
 
 export default class PlainReporter implements Reporter {
-  report(reports: readonly PackageReport[]): void {
+  report(reports: readonly PackageReport[]): number {
     const mappedReports = Object.fromEntries(
       reports.map((r) => {
         const relationalCohesion = (r.internalRelationships + 1) / r.numClasses;
@@ -23,5 +23,6 @@ export default class PlainReporter implements Reporter {
       }),
     );
     console.table(mappedReports);
+    return 0;
   }
 }

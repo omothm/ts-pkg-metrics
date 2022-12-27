@@ -40,7 +40,8 @@ async function main() {
   const facade = new MetricsFacade(loader, analyzer, reportCompiler);
   const reports = await facade.analyze();
   const reporter = new reporters[options.reportType]();
-  reporter.report(reports);
+  const exitCode = reporter.report(reports);
+  process.exit(exitCode);
 }
 
 function loadTsConfig(filename?: string) {

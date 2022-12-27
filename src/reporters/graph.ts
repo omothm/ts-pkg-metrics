@@ -1,5 +1,5 @@
 import Table from 'cli-table3';
-import colors from 'colors/safe';
+import c from 'colors/safe';
 import { PackageReport, Reporter } from '../core';
 
 type TableCell = string | { text: string; align?: 'center' | 'left' | 'right' };
@@ -19,7 +19,10 @@ interface TableRow {
 }
 
 export default class GraphReporter implements Reporter {
-  report(reports: readonly PackageReport[]): void {
+  private head = '⏺';
+  private stem = '─';
+
+  report(reports: readonly PackageReport[]): number {
     const table = new Table({
       head: this.rowToArray(
         {
@@ -47,17 +50,19 @@ export default class GraphReporter implements Reporter {
             packageName: r.packageName,
             numClasses: { text: `${r.numClasses}`, align: 'right' },
             internalRelationships: { text: `${r.internalRelationships}`, align: 'right' },
-            relationalCohesion: colors.bold(colors.yellow(r.relationalCohesion.toFixed(1))),
+            relationalCohesion:
+              c.bold(c.yellow(r.relationalCohesion.toFixed(1))) +
+              this.drawCohesionBar(r.relationalCohesion),
             abstractness: r.abstractness.toFixed(1),
             afferentCouplings: { text: `${r.afferentCouplings}`, align: 'right' },
             efferentCouplings: { text: `${r.efferentCouplings}`, align: 'right' },
             instability: r.instability.toFixed(1),
             safe: `${r.safe}`,
             normalDistance: {
-              text: colors.bold(colors.yellow(r.normalDistance.toFixed(1))),
+              text: c.bold(c.yellow(r.normalDistance.toFixed(1))),
               align: 'right',
             },
-            graph: this.drawBar(r.normalDistance),
+            graph: this.drawDistanceBar(r.normalDistance),
           },
           (value) =>
             typeof value === 'string' ? value : { content: value.text, hAlign: value.align },
@@ -65,19 +70,25 @@ export default class GraphReporter implements Reporter {
       );
     });
     console.log(table.toString());
+    return 0;
   }
 
-  private drawBar(normalDistance: number) {
+  private drawCohesionBar(cohesion: number) {
+    const barLength = Math.min(Number(cohesion.toFixed(1)) * 10, 10);
+    const color = barLength < 10 ? 'red' : 'green';
+    return c[color](this.stem.repeat(barLength - 1) + this.head);
+  }
+
+  private drawDistanceBar(normalDistance: number) {
     const barLength = Math.abs(Number(normalDistance.toFixed(1))) * 10;
     const color = barLength < 2 ? 'green' : barLength < 5 ? 'yellow' : 'red';
-    const head = '⏺';
-    const stem = '─';
     const leftSide =
       ' '.repeat(normalDistance < 0 ? 10 - barLength : 10) +
-      (normalDistance < 0 && barLength > 0 ? head + stem.repeat(barLength - 1) : '');
+      (normalDistance < 0 && barLength > 0 ? this.head + this.stem.repeat(barLength - 1) : '');
     const middle = normalDistance < 0 ? '┤' : normalDistance > 0 ? '├' : '│';
-    const rightSide = normalDistance > 0 && barLength > 0 ? stem.repeat(barLength - 1) + head : '';
-    return colors[color](`${leftSide}${middle}${rightSide}`);
+    const rightSide =
+      normalDistance > 0 && barLength > 0 ? this.stem.repeat(barLength - 1) + this.head : '';
+    return c[color](`${leftSide}${middle}${rightSide}`);
   }
 
   private rowToArray<T>(row: TableRow, transform: (value: TableCell) => T): T[] {
