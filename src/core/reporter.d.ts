@@ -1,5 +1,5 @@
-import { PackageAnalysis } from '.';
+import { PackageReport } from '.';
 
 export interface Reporter {
-  report(analyses: PackageAnalysis[]): void;
+  report(reports: readonly PackageReport[]): void;
 }

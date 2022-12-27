@@ -10,10 +10,11 @@ import DefaultProjectLoader from './impl/loader';
 import PlainReporter from './reporters/plain';
 import { Reporter } from './core';
 import GraphReporter from './reporters/graph';
+import DefaultReportCompiler from './impl/report-compiler';
 
 const reportTypes = ['plain', 'graph'] as const;
 type ReportType = typeof reportTypes[number];
-const reporters: Record<ReportType, new (safePackages: string[]) => Reporter> = {
+const reporters: Record<ReportType, new () => Reporter> = {
   plain: PlainReporter,
   graph: GraphReporter,
 };
@@ -25,18 +26,20 @@ main().catch((err) => {
 });
 
 async function main() {
-  const { projectDir, safePackages, tsConfigDir, reportType } = parseArgs();
+  const options = parseArgs();
 
   /* c8 ignore next */
-  const projectDirectory = projectDir ? path.resolve(projectDir) : process.cwd();
+  const projectDirectory = options.projectDir ? path.resolve(options.projectDir) : process.cwd();
   const loader = new DefaultProjectLoader(projectDirectory);
 
-  const { baseUrl, paths } = loadTsConfig(tsConfigDir);
+  const { baseUrl, paths } = loadTsConfig(options.tsConfigDir);
   const analyzer = new DefaultProjectAnalyzer(projectDirectory, baseUrl, paths);
 
-  const facade = new MetricsFacade(loader, analyzer);
+  const reportCompiler = new DefaultReportCompiler(options.safePackages);
+
+  const facade = new MetricsFacade(loader, analyzer, reportCompiler);
   const reports = await facade.analyze();
-  const reporter = new reporters[reportType](safePackages);
+  const reporter = new reporters[options.reportType]();
   reporter.report(reports);
 }
 

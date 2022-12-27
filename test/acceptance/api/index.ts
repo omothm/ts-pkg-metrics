@@ -2,6 +2,7 @@ import path from 'path';
 import DefaultProjectAnalyzer from '../../../src/impl/analyzer';
 import MetricsFacade from '../../../src/impl/facade';
 import DefaultProjectLoader from '../../../src/impl/loader';
+import DefaultReportCompiler from '../../../src/impl/report-compiler';
 
 export default class Api {
   private static projectsDirectory = path.join(__dirname, '..', 'data');
@@ -32,7 +33,8 @@ class FacadeProxy {
   constructor(projectDirectory: string) {
     const loader = new DefaultProjectLoader(projectDirectory);
     const analyzer = new DefaultProjectAnalyzer();
-    this.facade = new MetricsFacade(loader, analyzer);
+    const reportCompiler = new DefaultReportCompiler([]);
+    this.facade = new MetricsFacade(loader, analyzer, reportCompiler);
   }
 
   async analyze(): Promise<Result[]> {

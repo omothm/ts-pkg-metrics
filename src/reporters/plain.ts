@@ -1,7 +1,7 @@
-import { PackageAnalysis, Reporter } from '../core';
+import { PackageReport, Reporter } from '../core';
 
 export default class PlainReporter implements Reporter {
-  report(reports: PackageAnalysis[]): void {
+  report(reports: readonly PackageReport[]): void {
     const mappedReports = Object.fromEntries(
       reports.map((r) => {
         const relationalCohesion = (r.internalRelationships + 1) / r.numClasses;
