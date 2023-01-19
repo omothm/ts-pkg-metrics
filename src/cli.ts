@@ -88,7 +88,7 @@ function parseArgs() {
   return {
     projectDir: projectDir ? stringSchema.parse(projectDir) : undefined,
     safePackages: stringArraySchema.parse(options.safe ?? []),
-    tsConfigDir: options.tsConfigDir ? stringSchema.parse(options.tsConfigDir) : undefined,
+    tsConfigDir: options.tsConfig ? stringSchema.parse(options.tsConfig) : undefined,
     reportType: reporterSchema.parse(options.reporter ?? defaultReportType),
   };
 }
